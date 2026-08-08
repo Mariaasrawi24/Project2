@@ -3,10 +3,6 @@ name: Docker Build and Push
 on:
   workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   docker-build:
     runs-on: self-hosted
@@ -19,21 +15,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./backend/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/mariaasrawi24/project2:latest ./backend
 
-      - name: Show Docker image
-        run: docker images
+      - name: Push Docker image to GHCR
+        run: |
+          docker push ghcr.io/mariaasrawi24/project2:latest
+
+      - name: Show Docker images
+        run: |
+          docker images
